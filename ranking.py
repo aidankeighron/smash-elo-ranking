@@ -3,8 +3,9 @@ import json, os
 default_data = {"ELO": 1200, "WINS": 0, "LOSSES": 0, "GAMES": []}
 k_factor = 24
 def display_stats(data):
-    for player in data:
-        print(f"ELO: {player['ELO']} | Wins {player['WINS']} | Losses {player['LOSSES']}")
+    max_length = max(map(len, data.keys()))
+    for name, player in data.items():
+        print(f"{name+' '*(max_length-len(name))} | ELO: {player['ELO']} | Wins {player['WINS']} | Losses {player['LOSSES']}")
     
 def add_score(score, data, file):
     winner, looser, stocks = score.split()
@@ -28,19 +29,25 @@ def add_score(score, data, file):
     data[winner]["ELO"] += k_factor*(stock_difference/6+0.5-expected)
     expected = 1/(1+10**((winner_elo-looser_elo)/400))
     data[looser]["ELO"] += k_factor*(-stock_difference/6+0.5-expected)
-    file.write(json.dumps(data))
+    with open(f"{os.path.dirname(__file__)}\\data.json", "w") as file:
+        file.write(json.dumps(data))
 
-with open(f"{os.path.realpath(__file__)}/data.json", "r+") as file:
-    data = json.loads(file)
-    while True:
-        print("View Stats (1) \n or add Score (2)")
-        choice = input()
-        match choice:
-            case 1:
-                display_stats(data)
-            case 2:
-                print("Score Formatting 'WINNER_NAME LOOSER_NAME WINNER_STOCKS-LOOSER_STOCKS' EX Aidan Carlos 3-0")
-                score = input()
-                add_score(score, data, file)
-            case _:
-                continue
+with open(f"{os.path.dirname(__file__)}\\data.json", "r+") as file:
+    try:
+        data = json.loads(file.read())
+    except Exception:
+        data = {"Aidan": default_data}
+        file.write(json.dumps(data))
+
+while True:
+    print("View Stats (1)\nor add Score (2)")
+    choice = input()
+    match choice:
+        case "1":
+            display_stats(data)
+        case "2":
+            print("Score Formatting 'WINNER_NAME LOOSER_NAME WINNER_STOCKS-LOOSER_STOCKS' EX Aidan Carlos 3-0")
+            score = input()
+            add_score(score, data, file)
+        case _:
+            continue
